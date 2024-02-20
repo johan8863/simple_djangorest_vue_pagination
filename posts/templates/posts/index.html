@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posts Pagination</title>
+</head>
+<body>
+    <div id="posts">
+
+        <div
+            v-for="post in posts"
+            :key="post.id">
+            <h4>[[ post.title ]]</h4>
+        </div>
+
+        <template v-if="showPrevButton">
+            <button @click="loadPrev()">Prev</button>
+        </template>
+
+        <template v-if="showNextButton">
+            <button @click="loadNext()">Next</button>
+        </template>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        const Post = {
+            data() {
+                return {
+                    posts: [],
+                    currentpage: 1,
+                    showNextButton: false,
+                    showPrevButton: false
+                }
+            },
+            mounted() {
+                this.getPosts()
+            },
+            delimiters: ['[[', ']]'],
+            methods: {
+                getPosts() {
+                    fetch(`/posts/?page=${this.currentpage}`)
+                        .then(response => {
+                            return response.json()
+                        })
+                        .then(data => {
+                            console.log(data)
+                            // each time the api is consumed, this flags should be reset
+                            // to ensure the proper behavior at the end or the beginning of the list
+                            this.showNextButton = false
+
+                            if (data.next) {
+                                this.showNextButton = true
+                            }
+                            
+                            this.showPrevButton = false
+
+                            if (data.previous) {
+                                this.showPrevButton = true
+                            }
+
+                            this.posts = data.results
+                        })
+                        .catch(error => {
+                            console.log(error)
+                        })
+                },
+                loadNext() {
+                    this.currentpage += 1
+                    this.getPosts()
+                },
+                loadPrev() {
+                    this.currentpage -= 1
+                    this.getPosts()
+                },
+            }
+        }
+
+        Vue.createApp(Post).mount('#posts')
+    </script>
+</body>
+</html>
